@@ -18,20 +18,20 @@ from scipy import signal
 # case = 'simu'
 
 case = 'LT'
-_file = 'boost.txt'  # _file = '3k+3M_50V.txt'
+_file = 'LT/boost.txt'  # _file = '3k+3M_50V.txt'
 
-# case = 'Rigol'
-# _file = 'csv.csv'
+#case = 'Rigol'
+#_file = 'ignore/csv2.csv'
 
 # 'hanning' 'hamming' 'blackman' 'kaiser'
 # if kaiser+ -> 0=rectangle 5=hamming 6=hanning 8.6=blackmann
-_window = 'hanning'
-_kaiser_val = 0.3
-window_size = 14
+_window = 'kaiser'
+_kaiser_val = 10
+window_size = 128
 dc_removed = False
 _filter = False
 
-sft_factor = 1  # enhance spectrum
+sft_factor = 10  # enhance spectrum
 
 # #############################################################
 # simulate Signal
@@ -158,7 +158,7 @@ plt.ylabel('Amplitude [$Unit$]', size='8')
 plt.grid(axis='both', which='both', color='black', linestyle='-.', linewidth=0.1)
 lowest_sig = min(sig)
 largest_sig = max(sig)
-plt.ylim(lowest_sig - 0.25 * lowest_sig, largest_sig + 0.25 * largest_sig)
+plt.ylim(lowest_sig - 0.25 * abs(lowest_sig), largest_sig + 0.25 * largest_sig)
 plt.xlim(0, t[-1])
 # #############################################################
 
@@ -167,9 +167,9 @@ plt.xlim(0, t[-1])
 plt.subplot(312)
 plt.plot(X, 2.0 * np.abs(Y[:N]) / N)
 if dc_removed is True:
-    fft_title = 'Frequency Domain Signal, window: {} {}, DC removed'.format(_window, window_size)
+    fft_title = 'Frequency Domain Signal, window:{} size:{}, DC removed'.format(_window, window_size)
 else:
-    fft_title = 'Frequency Domain Signal, window: {} {}'.format(_window, window_size)
+    fft_title = 'Frequency Domain Signal, window:{} size:{}'.format(_window, window_size)
 plt.title(fft_title, size='9', color='blue')
 plt.xlabel('Frequency [$Hz$]', size='8')
 plt.ylabel('Amplitude [$Unit$]', size='8')
