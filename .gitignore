@@ -1,2 +1,7 @@
 
 ignore/
+*.csv
+*.txt
+*.wav
+*.mp3
+*.zip
