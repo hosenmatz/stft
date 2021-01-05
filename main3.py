@@ -10,37 +10,135 @@ die samplerate (dt bzw. fs) aus dem File ist daher nur gemittelt!
 import datafile from Rigol
 Rigol gibt die Samplefrequenz im Datenfile an
 '''
+import time
+starttime = int(round(time.time() * 1000))
 
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
+from acoustics import generator as gen
+import soundfile as sf
 
-# case = 'simu'
+# #############################################################
+case = 'Audiofile'
+_audiofile = 'Mixdown.wav'
+_file = 'huellkurve.txt'
+# #############################################################
 
-case = 'LT'
-_file = 'LT/boost.txt'  # _file = '3k+3M_50V.txt'
+# #############################################################
+#case = 'simuFreq'
+#_form = 'square'  # 'sine' 'square' 'squareDuty' 'saw'
+#frequency = 10
+#_dutycicle = 0.01
+# #############################################################
 
+# #############################################################
+#case = 'simuNoise'
+#_color = 'white' # 'white' 'pink' 'blue' 'brown' 'violet'
+# #############################################################
+
+# #############################################################
+#case = 'LT'
+#_file = 'huellkurve.txt'  # _file = '3k+3M_50V.txt'
+# #############################################################
+
+# #############################################################
 #case = 'Rigol'
-#_file = 'ignore/csv2.csv'
+#_file = 'Data/Rigol/data#.txt'
+# #############################################################
+
 
 # 'hanning' 'hamming' 'blackman' 'kaiser'
 # if kaiser+ -> 0=rectangle 5=hamming 6=hanning 8.6=blackmann
 _window = 'kaiser'
-_kaiser_val = 10
-window_size = 128
+_kaiser_val = 0
+window_size = 512
 dc_removed = False
 _filter = False
+_cutoff = 0.00001
 
-sft_factor = 10  # enhance spectrum
+sft_factor = 1  # enhance spectrum
 
 # #############################################################
 # simulate Signal
-if case == 'simu':
-    t = np.linspace(0, 2 * np.pi, 50000, endpoint=True)
-    f = 1000  # Frequency in Hz
-    A = 50.0  # Amplitude in Unit
-    sig = A * np.sin(2 * np.pi * f * t)  # Signal
-    dt = t[1] - t[0]
+if case == 'simuFreq':
+    freq = frequency  ## Frequency (in Hz)
+    samples = 1000000  ## Number of samples
+    x = np.arange(samples)
+    T = len(x) / samples
+    dt = 1 / samples
+    t=x*dt
+
+    ####### sine wave ###########
+    if _form == 'sine':
+        sig = 50 * np.sin(2 * np.pi * freq *x / samples)
+
+    ####### square wave ##########
+    if _form == 'square':
+        sig = 50* signal.square(2 *np.pi * freq *x / samples )
+
+    ####### square wave with Duty Cycle ##########
+    if _form == 'squareDuty':
+        sig = 50* signal.square((2 *np.pi * freq *x / samples), duty = _dutycicle)
+
+    ####### Sawtooth wave ########
+    if _form == 'saw':
+        sig = 50* signal.sawtooth(2 *np.pi * freq *x / samples )
+
+
+
+# #############################################################
+
+# #############################################################
+# simulate Signal
+if case == 'simuNoise':
+    #sampling_rate = 44100  ## Sampling Rate
+    #freq = 440  ## Frequency (in Hz)
+    #samples = 44100  ## Number of samples
+    #x = np.arange(samples)
+
+    ####### sine wave ###########
+    #y = 100 * np.sin(2 * np.pi * freq * x / sampling_rate)
+
+    ####### square wave ##########
+    # y = 100* sg.square(2 *np.pi * f *x / Fs )
+
+    ####### square wave with Duty Cycle ##########
+    # y = 100* sg.square(2 *np.pi * f *x / Fs , duty = 0.8)
+
+    ####### Sawtooth wave ########
+    # y = 100* sg.sawtooth(2 *np.pi * f *x / Fs )
+# #############################################################
+    seconds = 2
+    samples = 96000
+    A = 10.0  # Amplitude in Unit
+    sig = A * gen.noise(seconds * samples, _color)
+    t=[]
+    x=0
+    for i in sig:
+        t.append(x/samples)
+        x += 1
+    dt=1/samples
+    T = len(t)/samples
+# #############################################################
+
+# #############################################################
+# ascii txt file import from wav-file
+# creates huellkurve.txt and opens LT import afterwards
+# txt Data Format
+# time                      \t  dataL               \t  dataR
+# 4.5351473922902495e-05    \t	-0.00152587890625	\t  -0.0030517578125
+if case == 'Audiofile':
+    xdata, xxsamplerate = sf.read(_audiofile, always_2d=True)
+    xdata*=50.0
+    steps = len(xdata)
+    _time=steps/xxsamplerate
+    stepsize = _time/steps
+    with open('huellkurve.txt', 'w') as out:
+        for i in range(steps):
+            xdatal, xdatar = xdata[i]
+            _string = str(i*stepsize) + '\t' + str(xdatal) + '\t' + str(xdatar)
+            print(_string, file=out)
 # #############################################################
 
 # #############################################################
@@ -53,12 +151,13 @@ if case == 'simu':
 # _data = np.loadtxt('NewFile1.csv', delimiter=',', skiprows=2)
 # _data *= 1.0
 # t, sig = zip(*_data[:, :2])
-if case == 'LT':
+if case == 'LT' or case == 'Audiofile':
     # t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter='\t', skiprows=1, max_rows=800000)
     t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter='\t', skiprows=1)
     # dt = t[1] - t[0]
     # print('samples:', len(_data))
-    dt = t[-1] / len(t)  # total length of sample sequence
+    dt = t[-1] / len(t)
+    T = len(t)*dt # total length of sample sequence
 # #############################################################
 
 # #############################################################
@@ -74,8 +173,10 @@ if case == 'LT':
 # sig = Signal Amplitude
 if case == 'Rigol':
     start_V, dt = np.loadtxt(_file, usecols=(2, 3), unpack=True, delimiter=',', skiprows=1, max_rows=1)
-    t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter=',', skiprows=2, max_rows=50000)
+    #t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter=',', skiprows=2, max_rows=50000)
+    t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter=',', skiprows=2)
     t *= dt
+    T=len(t)*dt
 # #############################################################
 
 # #############################################################
@@ -83,8 +184,8 @@ if case == 'Rigol':
 if dc_removed is True:
     sig = sig - np.mean(sig)
 
-print('T=%.15fs (overall Time)' % t[-1])
 fs = 1.0 / dt  # scan frequency
+print('T=%.15fs (overall Time)' % T)
 print('dt=%.15fs (Sample step Time)' % dt)
 print('fs=%.2fHz (Sample Frequency)' % fs)
 # #############################################################
@@ -99,7 +200,7 @@ print('fs=%.2fHz (Sample Frequency)' % fs)
 # (Stuetzstellen und Fenster sind willkuerlich gewaehlt - Verbesserungen gerne!)
 if _filter is True:
     n = 31  # Anzahl Stuetzstellen
-    kern = signal.firwin(n, cutoff=0.01, window="hamming")
+    kern = signal.firwin(n, cutoff=_cutoff, window="hamming")
 
     Smooth = signal.lfilter(kern, 0.01, sig)
 # macht die ersten n Eintraege unbrauchbar... ggf. Constant / Zero padding der Eingangsdaten?
@@ -137,39 +238,26 @@ if _window != '':
 # #############################################################
 # signal w/ windowing and filtering
 if _filter is True:
-    YSmooth = np.fft.fft(windowing * Smooth)
+    Y = np.fft.fft(windowing * Smooth)
 # #############################################################
 
 
 N = int(len(Y) / 2)
+#N = int(1/dt / 2)
 print('Y =', len(Y))
 print('Nyquist =', N)
 X = np.linspace(0, fs / 2, N, endpoint=True)
 
-# #############################################################
-# time domain signal
 plt.figure()
-plt.subplot(311)
-plt.plot(t, sig)
-plt.title('Time Domain Signal', size='9', color='blue')
-plt.ylim(np.min(sig) * 3, np.max(sig) * 3)
-plt.xlabel('Time [$s$]', size='8')
-plt.ylabel('Amplitude [$Unit$]', size='8')
-plt.grid(axis='both', which='both', color='black', linestyle='-.', linewidth=0.1)
-lowest_sig = min(sig)
-largest_sig = max(sig)
-plt.ylim(lowest_sig - 0.25 * abs(lowest_sig), largest_sig + 0.25 * largest_sig)
-plt.xlim(0, t[-1])
-# #############################################################
 
 # #############################################################
 # frequency domain signal
-plt.subplot(312)
+plt.subplot(411, frameon=False)
 plt.plot(X, 2.0 * np.abs(Y[:N]) / N)
 if dc_removed is True:
-    fft_title = 'Frequency Domain Signal, window:{} size:{}, DC removed'.format(_window, window_size)
+    fft_title = 'Frequency Domain Signal, window:{}, size:{}, DC removed'.format(_window, window_size)
 else:
-    fft_title = 'Frequency Domain Signal, window:{} size:{}'.format(_window, window_size)
+    fft_title = 'Frequency Domain Signal, window:{}, size:{}'.format(_window, window_size)
 plt.title(fft_title, size='9', color='blue')
 plt.xlabel('Frequency [$Hz$]', size='8')
 plt.ylabel('Amplitude [$Unit$]', size='8')
@@ -180,11 +268,25 @@ plt.xscale('log')
 plt.grid(axis='both', which='both', color='black', linestyle='-.', linewidth=0.1)
 # #############################################################
 
+# #############################################################
+# time domain signal
+plt.subplot(412, frameon=False)
+plt.plot(t, sig)
+plt.title('Time Domain Signal', size='9', color='blue')
+plt.ylim(np.min(sig) * 3, np.max(sig) * 3)
+plt.xlabel('Time [$s$]', size='8')
+plt.ylabel('Amplitude [$Unit$]', size='8')
+plt.grid(axis='both', which='both', color='black', linestyle='-.', linewidth=0.1)
+lowest_sig = min(sig)
+largest_sig = max(sig)
+plt.ylim(lowest_sig - 0.3 * abs(lowest_sig), largest_sig + 0.25 * largest_sig)
+plt.xlim(0, t[-1])
+# #############################################################
 
 # #############################################################
 # stft magnitude
 # windowing is already done in np.fft -> Yhann Yhamm Yblack
-plt.subplot(313)
+plt.subplot(212)
 amp = 2 * np.sqrt(2)
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html
 f, t, Zxx = signal.stft(windowing * sig * sft_factor, fs, nperseg=window_size, noverlap=None)
@@ -196,6 +298,7 @@ plt.title(sft_title, size='9', color='blue')
 plt.ylabel('Frequency [$Hz$]', size='8')
 plt.xlabel('Time [$s$]', size='8')
 plt.grid(axis='both', which='both', color='black', linestyle='-.', linewidth=0.1)
+plt.xlim(0, t[-1])
 # #############################################################
 
 '''
@@ -213,7 +316,7 @@ plt.annotate("FFT",
 figManager = plt.get_current_fig_manager()
 figManager.window.showMaximized()
 
-plt.subplots_adjust(hspace=0.5, wspace=0.1)
+plt.subplots_adjust(hspace=0.6, wspace=0.1)
 plt.subplots_adjust(left=0.07, right=0.95, bottom=0.1, top=0.95)
 # plt.tight_layout()
 
@@ -255,5 +358,8 @@ plt.tight_layout()
 
 # #############################################################
 '''
+
+enddtime = int(round(time.time() * 1000))
+print('this took:', (enddtime-starttime)/1000, 'sec.')
 
 plt.show()
