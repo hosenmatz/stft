@@ -20,9 +20,9 @@ from acoustics import generator as gen
 import soundfile as sf
 
 # #############################################################
-case = 'Audiofile'
-_audiofile = 'Mixdown.wav'
-_file = 'huellkurve.txt'
+#case = 'Audiofile'
+#_audiofile = 'ignore/Mixdown.wav'
+#_file = 'ignore/huellkurve.txt'
 # #############################################################
 
 # #############################################################
@@ -38,8 +38,8 @@ _file = 'huellkurve.txt'
 # #############################################################
 
 # #############################################################
-#case = 'LT'
-#_file = 'huellkurve.txt'  # _file = '3k+3M_50V.txt'
+case = 'LT'
+_file = 'ignore/Data/LT/dataLT6.txt'  # _file = '3k+3M_50V.txt'
 # #############################################################
 
 # #############################################################
@@ -134,7 +134,7 @@ if case == 'Audiofile':
     steps = len(xdata)
     _time=steps/xxsamplerate
     stepsize = _time/steps
-    with open('huellkurve.txt', 'w') as out:
+    with open(_file, 'w') as out:
         for i in range(steps):
             xdatal, xdatar = xdata[i]
             _string = str(i*stepsize) + '\t' + str(xdatal) + '\t' + str(xdatar)
