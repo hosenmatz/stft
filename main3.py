@@ -11,6 +11,7 @@ import datafile from Rigol
 Rigol gibt die Samplefrequenz im Datenfile an
 '''
 import time
+import os
 starttime = int(round(time.time() * 1000))
 
 import numpy as np
@@ -38,8 +39,8 @@ import soundfile as sf
 # #############################################################
 
 # #############################################################
-case = 'LT'
-_file = 'ignore/Data/LT/dataLT6.txt'  # _file = '3k+3M_50V.txt'
+#case = 'LT'
+#_file = 'ignore/Data/LT/dataLT6.txt'  # _file = '3k+3M_50V.txt'
 # #############################################################
 
 # #############################################################
@@ -47,17 +48,23 @@ _file = 'ignore/Data/LT/dataLT6.txt'  # _file = '3k+3M_50V.txt'
 #_file = 'Data/Rigol/data#.txt'
 # #############################################################
 
+# #############################################################
+case = 'LeCroy'
+_file = 'ignore/Data/LeCroy/C2--Ycap_current.dat'
+_sig_factor = 300.0
+# #############################################################
+
 
 # 'hanning' 'hamming' 'blackman' 'kaiser'
 # if kaiser+ -> 0=rectangle 5=hamming 6=hanning 8.6=blackmann
 _window = 'kaiser'
 _kaiser_val = 0
-window_size = 512
+window_size = 1024
 dc_removed = False
 _filter = False
 _cutoff = 0.00001
 
-sft_factor = 1  # enhance spectrum
+sft_factor = 1.0  # enhance spectrum
 
 # #############################################################
 # simulate Signal
@@ -177,6 +184,19 @@ if case == 'Rigol':
     t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter=',', skiprows=2)
     t *= dt
     T=len(t)*dt
+# #############################################################
+
+# #############################################################
+# LeCroy import
+# dat Data Format
+# 1 -0.0001000000142 -3.23194
+# 2 -9.999991422e-05 -3.2385
+if case == 'LeCroy':
+    t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter=' ', skiprows=0)
+    sig *=_sig_factor
+    t+=abs(t[0]) # faengt mit negativer Zeit an
+    dt = t[1]-t[0]
+    T = len(t) * dt  # total length of sample sequence
 # #############################################################
 
 # #############################################################
