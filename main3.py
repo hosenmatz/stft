@@ -50,21 +50,21 @@ import soundfile as sf
 
 # #############################################################
 case = 'LeCroy'
-_file = 'ignore/Data/LeCroy/C2--Ycap_current.dat'
-_sig_factor = 300.0
+_file = 'ignore/Data/LeCroy/dUdt PSFB_Traces/C3--Trace--00000.txt'
+_sig_factor = 1.0
 # #############################################################
 
 
 # 'hanning' 'hamming' 'blackman' 'kaiser'
-# if kaiser+ -> 0=rectangle 5=hamming 6=hanning 8.6=blackmann
+# if kaiser + -> 0=rectangle 5=hamming 6=hanning 8.6=blackmann
 _window = 'kaiser'
-_kaiser_val = 0
-window_size = 1024
+_kaiser_val = 5
+window_size = 256
 dc_removed = False
 _filter = False
-_cutoff = 0.00001
+_cutoff = 0.0000001
 
-sft_factor = 1.0  # enhance spectrum
+sft_factor = 2.0  # enhance spectrum
 
 # #############################################################
 # simulate Signal
@@ -160,7 +160,7 @@ if case == 'Audiofile':
 # t, sig = zip(*_data[:, :2])
 if case == 'LT' or case == 'Audiofile':
     # t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter='\t', skiprows=1, max_rows=800000)
-    t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter='\t', skiprows=1)
+    t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter=',', skiprows=6)
     # dt = t[1] - t[0]
     # print('samples:', len(_data))
     dt = t[-1] / len(t)
@@ -192,7 +192,7 @@ if case == 'Rigol':
 # 1 -0.0001000000142 -3.23194
 # 2 -9.999991422e-05 -3.2385
 if case == 'LeCroy':
-    t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter=' ', skiprows=0)
+    t, sig = np.loadtxt(_file, usecols=(0, 1), unpack=True, delimiter=',', skiprows=5)
     sig *=_sig_factor
     t+=abs(t[0]) # faengt mit negativer Zeit an
     dt = t[1]-t[0]
