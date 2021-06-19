@@ -50,7 +50,7 @@ import soundfile as sf
 
 # #############################################################
 case = 'LeCroy'
-_file = 'ignore/Data/LeCroy/dUdt PSFB_Traces/C3--Trace--00000.txt'
+_file = 'ignore/Data/LeCroy/dUdt PSFB_Traces/C1--Trace--00000.txt'
 _sig_factor = 1.0
 # #############################################################
 
@@ -59,12 +59,13 @@ _sig_factor = 1.0
 # if kaiser + -> 0=rectangle 5=hamming 6=hanning 8.6=blackmann
 _window = 'kaiser'
 _kaiser_val = 5
-window_size = 256
+window_size = 800
 dc_removed = False
 _filter = False
 _cutoff = 0.0000001
 
-sft_factor = 2.0  # enhance spectrum
+sft_factor = 1.0  # enhance spectrum
+_roof_factor = 0.25 # cut spectrogram on top - höchste angezeigte Frequenz im Spektrum -> f_max * _roof_factor
 
 # #############################################################
 # simulate Signal
@@ -311,12 +312,16 @@ amp = 2 * np.sqrt(2)
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html
 f, t, Zxx = signal.stft(windowing * sig * sft_factor, fs, nperseg=window_size, noverlap=None)
 largest_f = max(f)
+largest_Z = np.argmax(Zxx);
+print("largest_f: ", largest_f, " largest_Z: ",  largest_Z);
 plt.pcolormesh(t, f, np.abs(Zxx), vmin=0, vmax=amp, shading='nearest') # 'gouraud', 'nearest', 'flat', 'auto'
 #plt.ylim(0.0, 5000000)
 sft_title = 'STFT Magnitude(factor {}), highest f = {:.2f}Hz'.format(sft_factor, largest_f)
 plt.title(sft_title, size='9', color='blue')
 plt.ylabel('Frequency [$Hz$]', size='8')
 plt.xlabel('Time [$s$]', size='8')
+#plt.ylim(np.min(f), np.max(f) * _roof_factor)
+plt.ylim(np.min(f), largest_f * _roof_factor)
 plt.grid(axis='both', which='both', color='black', linestyle='-.', linewidth=0.1)
 plt.xlim(0, t[-1])
 # #############################################################
