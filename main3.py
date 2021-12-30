@@ -28,9 +28,9 @@ import soundfile as sf
 
 # #############################################################
 #case = 'simuFreq'
-#_form = 'square'  # 'sine' 'square' 'squareDuty' 'saw'
-#frequency = 10
-#_dutycicle = 0.01
+# _form = 'square'  # 'sine' 'square' 'squareDuty' 'saw'
+# frequency = 10
+# _dutycicle = 0.01
 # #############################################################
 
 # #############################################################
@@ -60,7 +60,7 @@ _sig_factor = 1.0
 _window = 'kaiser'
 _kaiser_val = 5
 window_size = 800
-dc_removed = False
+dc_removed = True
 _filter = False
 _cutoff = 0.0000001
 
@@ -273,7 +273,7 @@ plt.figure()
 
 # #############################################################
 # frequency domain signal
-plt.subplot(411, frameon=False)
+ax0 = plt.subplot(411, frameon=False)
 plt.plot(X, 2.0 * np.abs(Y[:N]) / N)
 if dc_removed is True:
     fft_title = 'Frequency Domain Signal, window:{}, size:{}, DC removed'.format(_window, window_size)
@@ -291,7 +291,7 @@ plt.grid(axis='both', which='both', color='black', linestyle='-.', linewidth=0.1
 
 # #############################################################
 # time domain signal
-plt.subplot(412, frameon=False)
+ax1 = plt.subplot(412, frameon=False)
 plt.plot(t, sig)
 plt.title('Time Domain Signal', size='9', color='blue')
 plt.ylim(np.min(sig) * 3, np.max(sig) * 3)
@@ -307,7 +307,7 @@ plt.xlim(0, t[-1])
 # #############################################################
 # stft magnitude
 # windowing is already done in np.fft -> Yhann Yhamm Yblack
-plt.subplot(212)
+ax2 = plt.subplot(212, sharex=ax1)
 amp = 2 * np.sqrt(2)
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html
 f, t, Zxx = signal.stft(windowing * sig * sft_factor, fs, nperseg=window_size, noverlap=None)
